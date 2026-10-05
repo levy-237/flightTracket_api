@@ -33,6 +33,12 @@ public class FlightScheduler {
         this.flightPersistanceService = flightPersistanceService;
     }
 
+    @Scheduled(cron = "0 59 23 * * *", zone = "Europe/Vienna")
+    public void cleanupFlights() {
+        flightPersistanceService.deleteAllFlights();
+        log.info("Nightly cleanup completed: all flight positions and flights deleted.");
+    }
+
     @Scheduled(
             fixedDelayString = "${adsb.poll-interval-ms}"
     )

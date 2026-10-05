@@ -34,6 +34,26 @@ class FlightPersistanceServiceTests {
         service = new FlightPersistanceService(aircraft, positions, flights);
     }
 
+    @Test
+    void deletesPositionsBeforeFlightsAndPreservesAircraft() {
+        service.deleteAllFlights();
+
+        var order = inOrder(positions, flights);
+        order.verify(positions).deleteAllInBatch();
+        order.verify(flights).deleteAllInBatch();
+        verifyNoInteractions(aircraft);
+    }
+
+    @Test
+    void doesNotDeleteFlightsWhenPositionDeletionFails() {
+        var failure = new IllegalStateException("Position deletion failed");
+        doThrow(failure).when(positions).deleteAllInBatch();
+
+        assertSame(failure, assertThrows(IllegalStateException.class, service::deleteAllFlights));
+
+        verifyNoInteractions(flights, aircraft);
+    }
+
     @ParameterizedTest
     @MethodSource("metadataUpdates")
     void fillsOnlyMissingAircraftMetadata(
