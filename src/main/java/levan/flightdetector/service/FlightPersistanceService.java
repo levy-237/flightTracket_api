@@ -29,6 +29,13 @@ public class FlightPersistanceService {
     }
 
     @Transactional
+    public void deleteAllFlights() {
+        // Positions reference flights, so remove them first.
+        flightPositionRepository.deleteAllInBatch();
+        flightRepository.deleteAllInBatch();
+    }
+
+    @Transactional
     public List<LiveFlightDto> persistSnapshot(AdbResponseDto response){
         Instant now = Instant.now();
 
