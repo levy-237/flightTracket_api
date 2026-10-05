@@ -76,7 +76,7 @@ public class Flights {
     }
 
 
-    // JUST TEST
+    /* Disabled development endpoint: loads all aircraft, flights, and positions without pagination.
     @GetMapping("/aircraft-details")
     public List<Map<String, Object>> getAircraftDetails() {
         return aircraftRepository.findAll().stream()
@@ -91,5 +91,6 @@ public class Flights {
                 ))
                 .toList();
     }
+    */
 
 }
