@@ -43,4 +43,15 @@ public class Aircraft {
         return aircraftType;
     }
 
+    public void updateMetadata(String registration, String aircraftType) {
+        if ((this.registration == null || this.registration.isBlank())
+                && registration != null && !registration.isBlank()) {
+            this.registration = registration.trim();
+        }
+        if ((this.aircraftType == null || this.aircraftType.isBlank())
+                && aircraftType != null && !aircraftType.isBlank()) {
+            this.aircraftType = aircraftType.trim();
+        }
+    }
+
 }

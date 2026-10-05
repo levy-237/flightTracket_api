@@ -161,16 +161,20 @@ public class FlightPersistanceService {
                 continue;
             }
 
-            if (aircraftByHex.containsKey(dto.hex())) {
+            Aircraft existing = aircraftByHex.get(dto.hex());
+            if (existing != null) {
+                // Existing entities are managed by the snapshot transaction.
+                existing.updateMetadata(dto.registration(), dto.aircraftType());
                 continue;
             }
 
 
             Aircraft aircraft = new Aircraft(
                     dto.hex(),
-                    dto.registration(),
-                    dto.aircraftType()
+                    null,
+                    null
             );
+            aircraft.updateMetadata(dto.registration(), dto.aircraftType());
 
 
             aircraftByHex.put(
