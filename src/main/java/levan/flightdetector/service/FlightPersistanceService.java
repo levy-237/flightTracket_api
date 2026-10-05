@@ -28,9 +28,9 @@ public class FlightPersistanceService {
         this.flightPositionRepository = flightPositionRepository;
     }
 
+    // Clean up flight and its positions every night. we keep new fresh 24 hour data
     @Transactional
     public void deleteAllFlights() {
-        // Positions reference flights, so remove them first.
         flightPositionRepository.deleteAllInBatch();
         flightRepository.deleteAllInBatch();
     }
