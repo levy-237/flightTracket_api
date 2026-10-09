@@ -35,6 +35,7 @@ public class FlightScheduler {
 
     @Scheduled(cron = "0 59 23 * * *", zone = "Europe/Vienna")
     public void cleanupFlights() {
+        log.info("Nightly cleanup started.");
         flightPersistanceService.deleteAllFlights();
         log.info("Nightly cleanup completed: all flight positions and flights deleted.");
     }
@@ -43,22 +44,31 @@ public class FlightScheduler {
             fixedDelayString = "${adsb.poll-interval-ms}"
     )
     public void pollFlights(){
-        AdbResponseDto flights;
+        long started = System.nanoTime();
+        String stage = "fetching ADS-B data";
         try {
-            flights = flightService.getNearbyFlights(VIENNA_LAT, VIENNA_LON, RADIUS);
+            log.info("Flight poll started: fetching ADS-B data.");
+            AdbResponseDto flights = flightService.getNearbyFlights(VIENNA_LAT, VIENNA_LON, RADIUS);
+            if (flights == null || flights.ac() == null) {
+                throw new IllegalStateException("ADS-B response is missing the aircraft list");
+            }
+
+            stage = "persisting snapshot";
+            log.info("ADS-B fetch completed: {} aircraft; persisting snapshot.", flights.ac().size());
+            List<LiveFlightDto> ourParsedData = flightPersistanceService.persistSnapshot(flights);
+
+            stage = "broadcasting flights";
+            log.info("Snapshot persisted: broadcasting {} flights.", ourParsedData.size());
+            flightBroadcastService.broadcastAircraft(ourParsedData);
+
+            log.info("Aircraft data fetched successfully and published to /topic/flights in {} ms.",
+                    (System.nanoTime() - started) / 1_000_000);
         } catch (HttpClientErrorException.TooManyRequests exception) {
-
             log.warn("Too many requests to the aircraft API; skipping this update.");
-
-
-            return;
+        } catch (RuntimeException exception) {
+            log.error("Flight poll failed while {} after {} ms; the next scheduled poll will retry.",
+                    stage, (System.nanoTime() - started) / 1_000_000, exception);
         }
-
-        List<LiveFlightDto> ourParsedData =  flightPersistanceService.persistSnapshot(flights);
-
-        flightBroadcastService.broadcastAircraft(ourParsedData);
-
-        log.info("Aircraft data fetched successfully and published to /topic/flights.");
     }
 
 }
